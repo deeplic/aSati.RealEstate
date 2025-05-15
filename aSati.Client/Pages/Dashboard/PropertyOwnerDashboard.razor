@@ -1,0 +1,142 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using aSati.Shared.Models
+@* @attribute [Authorize(Roles = "PropertyOwner")] *@
+<PageTitle>Property Owner Dashboard</PageTitle>
+@page "/dashboard"
+@* @inject HttpClient Http *@
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h4" GutterBottom="true">Property Owner Dashboard</MudText>
+
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1">Total Properties</MudText>
+                    <MudText Typo="Typo.h5">@TotalProperties</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1">Total Units</MudText>
+                    <MudText Typo="Typo.h5">@TotalUnits</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1">Active Leases</MudText>
+                    <MudText Typo="Typo.h5">@ActiveLeases</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1">Active Tenants</MudText>
+                    <MudText Typo="Typo.h5">@ActiveTenants</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <MudDivider Class="my-4" />
+
+    <MudText Typo="Typo.h6" GutterBottom="true">Your Properties</MudText>
+
+    <MudTable Items="@Properties" Hover="true">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Location</MudTh>
+            <MudTh>Units</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@context.City, @context.Country</MudTd>
+            <MudTd>@context.Units?.Count ?? 0</MudTd>
+            <MudTd>
+                <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => ViewUnits(context.Id))">
+                    View Units
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" OnClick="AddNewProperty" Class="mt-4">
+        Add New Property
+    </MudButton>
+</MudPaper>
+
+@code {
+    private List<MainProperty> Properties = new();
+    private int TotalProperties => Properties.Count;
+    private int TotalUnits => Properties.Sum(p => p.Units?.Count ?? 0);
+    private int ActiveLeases => Properties
+        .SelectMany(p => p.Units ?? new())
+        .SelectMany(u => u.Leases ?? new())
+        .Count(l => l.Status == LeaseStatus.Active);
+    private int ActiveTenants => Properties
+        .SelectMany(p => p.Units ?? new())
+        .SelectMany(u => u.Leases ?? new())
+        .Select(l => l.TenantId)
+        .Distinct()
+        .Count();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // For now, mocking data locally — replace with Http call later
+        Properties = await LoadMockProperties();
+    }
+
+    private Task<List<MainProperty>> LoadMockProperties()
+    {
+        var sample = new List<MainProperty>
+        {
+            new MainProperty
+            {
+                Id = Guid.NewGuid(),
+                Name = "Sunny Villas",
+                City = "Nairobi",
+                Country = "Kenya",
+                Units = new List<PropertyUnit>
+                {
+                    new PropertyUnit
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "Villa A1",
+                        Leases = new List<Lease>
+                        {
+                            new Lease { TenantId = "user1", Status = LeaseStatus.Active }
+                        }
+                    }
+                }
+            },
+            new MainProperty
+            {
+                Id = Guid.NewGuid(),
+                Name = "Ocean Heights",
+                City = "Mombasa",
+                Country = "Kenya",
+                Units = new List<PropertyUnit>()
+            }
+        };
+
+        return Task.FromResult(sample);
+    }
+
+    private void ViewUnits(Guid propertyId)
+    {
+        // Later: navigate to Units page or open modal
+        Console.WriteLine($"View units for property {propertyId}");
+    }
+
+    private void AddNewProperty()
+    {
+        // Later: open MudDialog to add property
+        Console.WriteLine("Add new property clicked.");
+    }
+}
