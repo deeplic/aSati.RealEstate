@@ -1,0 +1,56 @@
+﻿@page "/property/{PropertyId:guid}/units"
+@using aSati.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+@using MudBlazor
+
+<PageTitle>Property Units</PageTitle>
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5">Units for @propertyName</MudText>
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddUnit">Add New Unit</MudButton>
+
+    <MudTable Items="units" Hover="true" Dense="true">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small" OnClick="@(() => AssignLease(context.Id))">Assign Lease</MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    [Parameter] public Guid PropertyId { get; set; }
+
+    private List<PropertyUnit> units = new();
+    private string propertyName = "Loading...";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            units = await Http.GetFromJsonAsync<List<PropertyUnit>>($"api/property/{PropertyId}/units");
+            var property = await Http.GetFromJsonAsync<MainProperty>($"api/property/{PropertyId}");
+            propertyName = property?.Name ?? "Unknown";
+        }
+        catch
+        {
+            propertyName = "Error loading property";
+        }
+    }
+
+    private void AddUnit()
+    {
+        Nav.NavigateTo($"/property/{PropertyId}/units/add");
+    }
+    private void AssignLease(Guid unitId)
+    {
+        Nav.NavigateTo($"/property/unit/{unitId}/lease");
+    }
+}

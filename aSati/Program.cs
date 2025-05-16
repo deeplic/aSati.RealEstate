@@ -46,10 +46,20 @@ namespace aSati
             })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
-
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
             builder.Services.AddMudServices();
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
             builder.Services.AddControllers();
+            builder.Services.AddHttpClient(); // This registers HttpClient for injection
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -65,6 +75,7 @@ namespace aSati
                 app.UseHsts();
             }
             app.UseRouting();
+            app.UseCors();
             app.UseAuthentication();
             app.UseAuthorization();
 

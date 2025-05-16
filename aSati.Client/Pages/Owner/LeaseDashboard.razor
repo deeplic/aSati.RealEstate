@@ -1,0 +1,34 @@
+﻿@page "/owner/leases"
+@inject HttpClient Http
+@using aSati.Shared.Models
+@using MudBlazor
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5">Lease Checklists Dashboard</MudText>
+
+    <MudTable Items="leases" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Property</MudTh>
+            <MudTh>Unit</MudTh>
+            <MudTh>Tenant</MudTh>
+            <MudTh>Start</MudTh>
+            <MudTh>Checklist Items</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.PropertyUnit?.Property?.Name</MudTd>
+            <MudTd>@context.PropertyUnit?.Name</MudTd>
+            <MudTd>@context.TenantId</MudTd>
+            <MudTd>@context.StartDate.ToShortDateString()</MudTd>
+            <MudTd>@context.ChecklistItems.Count</MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private List<Lease> leases = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        leases = await Http.GetFromJsonAsync<List<Lease>>("api/LeaseReview/leases-with-checklists") ?? new();
+    }
+}

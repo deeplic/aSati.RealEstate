@@ -1,76 +1,108 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
-
-@* <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+@if(_isIdentityPage)
+{
+    <div class="page">
+        <div class="sidebar">
+            <NavMenu />
         </div>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+        <main>
+            <div class="top-row px-4">
+                <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            </div>
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div> *@
-<MudThemeProvider />
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider/>
+            <article class="content px-4">
+                @Body
+            </article>
+        </main>
+    </div>
 
-        <MudLayout>
-            <MudAppBar Color="Color.Primary" Elevation="4">
-                <MudText Typo="Typo.h6">aSati - Property Owner Dashboard</MudText>
+    <div id="blazor-error-ui" data-nosnippet>
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+}
+else
+{
+    <MudThemeProvider />
+    <MudPopoverProvider />
+    <MudDialogProvider />
+    <MudSnackbarProvider />
+    <MudLayout>
+        <MudAppBar Color="Color.Primary" Elevation="4">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+            <MudText Typo="Typo.h6">aSati - Property Owner Dashboard</MudText>
 
-                <MudSpacer />
+            <MudSpacer />
 
+            <AuthorizeView>
+                <Authorized>
+                    <MudText Typo="Typo.subtitle2">@context.User.Identity?.Name</MudText>
+                    <MudMenu Icon="@Icons.Material.Filled.AccountCircle">
+                        <MudMenuItem Href="Account/Manage">Account</MudMenuItem>
+                        <MudMenuItem>
+                            <form method="post" action="Account/Logout">
+                                <AntiforgeryToken />
+                                <input type="hidden" name="ReturnUrl" value="@NavigationManager.Uri" />
+                                <button type="submit" class="mud-button mud-button-text">Logout</button>
+                            </form>
+                        </MudMenuItem>
+                    </MudMenu>
+                </Authorized>
+                <NotAuthorized>
+                    <MudButton Href="Account/Login" Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
+                    <MudButton Href="Account/Register" Variant="Variant.Text" Color="Color.Inherit">Register</MudButton>
+                </NotAuthorized>
+            </AuthorizeView>
+        </MudAppBar>
+
+        <MudDrawer Variant="DrawerVariant.Persistent" @bind-Open="@_open">
+            <MudNavMenu>
+                <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+                <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+                <MudNavLink Href="/weather" Icon="@Icons.Material.Filled.Cloud">Weather</MudNavLink>
+                <MudNavLink Href="/counter" Icon="@Icons.Material.Filled.Add">Counter</MudNavLink>
+                <MudNavLink Href="/auth" Icon="@Icons.Material.Filled.Lock">Auth Required</MudNavLink>
                 <AuthorizeView>
                     <Authorized>
-                        <MudText Typo="Typo.subtitle2">@context.User.Identity?.Name</MudText>
-                        <MudMenu Icon="@Icons.Material.Filled.AccountCircle">
-                            <MudMenuItem Href="Account/Manage">Account</MudMenuItem>
-                            <MudMenuItem>
-                                <form method="post" action="Account/Logout">
-                                    <AntiforgeryToken />
-                                    <input type="hidden" name="ReturnUrl" value="@NavigationManager.Uri" />
-                                    <button type="submit" class="mud-button mud-button-text">Logout</button>
-                                </form>
-                            </MudMenuItem>
-                        </MudMenu>
+                        <MudNavLink Href="/tenant/checklist" Icon="@Icons.Material.Filled.Checklist">Move-in Checklist</MudNavLink>
                     </Authorized>
-                    <NotAuthorized>
-                        <MudButton Href="Account/Login" Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
-                        <MudButton Href="Account/Register" Variant="Variant.Text" Color="Color.Inherit">Register</MudButton>
-                    </NotAuthorized>
                 </AuthorizeView>
-            </MudAppBar>
+                <AuthorizeView Roles="PropertyOwner,Staff,Superuser">
+                    <Authorized>
+                        <NavLink class="nav-link" href="/owner/leases">
+                            <span class="bi bi-list-task"></span> Lease Reviews
+                        </NavLink>
+                    </Authorized>
+                </AuthorizeView>
+            </MudNavMenu>
+        </MudDrawer>
 
-            <MudDrawer Variant="DrawerVariant.Temporary" Open="true">
-                <MudNavMenu>
-                    <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-                    <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
-                    <MudNavLink Href="/weather" Icon="@Icons.Material.Filled.Cloud">Weather</MudNavLink>
-                    <MudNavLink Href="/counter" Icon="@Icons.Material.Filled.Add">Counter</MudNavLink>
-                    <MudNavLink Href="/auth" Icon="@Icons.Material.Filled.Lock">Auth Required</MudNavLink>
-                </MudNavMenu>
-            </MudDrawer>
-
-            <MudMainContent>
-                @Body
-            </MudMainContent>
-        </MudLayout>
-
+        <MudMainContent>
+            @Body
+        </MudMainContent>
+    </MudLayout>
+}
 
 @code{
+    private bool _open = false;
+    private bool _isIdentityPage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isIdentityPage =
+          Uri.TryCreate(NavigationManager.Uri, UriKind.Absolute, out var currentUri) &&
+          currentUri.PathAndQuery.StartsWith("/Account");
+
+        // other content
+    }
+    private void ToggleDrawer()
+    {
+        _open = !_open;
+    }
+
     [Inject] AuthenticationStateProvider AuthProvider { get; set; }
 
     private async Task<string> GetUserRole()

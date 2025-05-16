@@ -3,8 +3,9 @@
 @* @attribute [Authorize(Roles = "PropertyOwner")] *@
 <PageTitle>Property Owner Dashboard</PageTitle>
 @page "/dashboard"
-@* @inject HttpClient Http *@
-
+@inject HttpClient Http
+@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
 <MudPaper Class="pa-4">
     <MudText Typo="Typo.h4" GutterBottom="true">Property Owner Dashboard</MudText>
 
@@ -57,7 +58,7 @@
         <RowTemplate>
             <MudTd>@context.Name</MudTd>
             <MudTd>@context.City, @context.Country</MudTd>
-            <MudTd>@context.Units?.Count ?? 0</MudTd>
+            <MudTd>@(context.Units?.Count ?? 0)</MudTd>
             <MudTd>
                 <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => ViewUnits(context.Id))">
                     View Units
@@ -88,9 +89,16 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // For now, mocking data locally — replace with Http call later
-        Properties = await LoadMockProperties();
+        try
+        {
+            Properties = await Http.GetFromJsonAsync<List<MainProperty>>("api/property/mine") ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Failed to load properties: {ex.Message}");
+        }
     }
+
 
     private Task<List<MainProperty>> LoadMockProperties()
     {
@@ -130,13 +138,18 @@
 
     private void ViewUnits(Guid propertyId)
     {
-        // Later: navigate to Units page or open modal
-        Console.WriteLine($"View units for property {propertyId}");
+        NavigationManager.NavigateTo($"/property/{propertyId}/units");
     }
 
-    private void AddNewProperty()
+    private async void AddNewProperty()
     {
-        // Later: open MudDialog to add property
-        Console.WriteLine("Add new property clicked.");
+        var dialog = await DialogService.ShowAsync<AddPropertyDialog>("Add New Property");
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await OnInitializedAsync(); // Refresh list
+        }
     }
+
 }

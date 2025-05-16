@@ -1,0 +1,47 @@
+﻿@using aSati.Shared.Models
+@inject HttpClient Http
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField Label="Property Name" @bind-Value="_property.Name" Required="true" />
+        <MudTextField Label="Address" @bind-Value="_property.Address" Required="true" />
+        <MudTextField Label="City" @bind-Value="_property.City" Required="true" />
+        <MudTextField Label="Country" @bind-Value="_property.Country" Required="true" />
+
+        <MudText Color="Color.Error" Typo="Typo.subtitle2">@_errorMessage</MudText>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Save" Color="Color.Primary">Save</MudButton>
+        <MudButton OnClick="Cancel" Color="Color.Secondary">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private MainProperty _property = new();
+    private string? _errorMessage;
+
+    private async Task Save()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/property", _property);
+            if (response.IsSuccessStatusCode)
+            {
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                _errorMessage = "Failed to save property. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

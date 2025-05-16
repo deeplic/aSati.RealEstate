@@ -10,6 +10,7 @@ namespace aSati.Shared.Models
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public Guid PropertyUnitId { get; set; } // 🔄 from PropertyId to PropertyUnitId
+        public PropertyUnit? PropertyUnit { get; set; } // 👈 Add this
         public string TenantId { get; set; } = string.Empty;
         public DateTime StartDate { get; set; } = DateTime.UtcNow;
         public DateTime? EndDate { get; set; }

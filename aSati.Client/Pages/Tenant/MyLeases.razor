@@ -1,0 +1,44 @@
+﻿@page "/tenant/my-leases"
+@inject HttpClient Http
+@using aSati.Shared.Models
+@using MudBlazor
+@inject NavigationManager Navigation
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h6">My Leases</MudText>
+
+    <MudTable Items="leases" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Property</MudTh>
+            <MudTh>Unit</MudTh>
+            <MudTh>Start</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.PropertyUnit?.Property?.Name</MudTd>
+            <MudTd>@context.PropertyUnit?.Name</MudTd>
+            <MudTd>@context.StartDate.ToShortDateString()</MudTd>
+            <MudTd>@context.Status</MudTd>
+            <MudTd>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           OnClick="@(() => NavigateToChecklist(context.Id))">
+                    Fill Checklist
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private List<Lease> leases = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        leases = await Http.GetFromJsonAsync<List<Lease>>("api/leases/mine") ?? new();
+    }
+
+    private void NavigateToChecklist(Guid leaseId)
+    {
+        Navigation.NavigateTo($"/tenant/checklist/{leaseId}");
+    }
+}

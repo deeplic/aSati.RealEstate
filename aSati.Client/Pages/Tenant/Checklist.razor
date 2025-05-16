@@ -1,0 +1,64 @@
+﻿@page "/tenant/checklist/{leaseId:guid}"
+@using aSati.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Move-in Checklist</PageTitle>
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h6">Tenant Move-in Checklist</MudText>
+
+    <MudList T="PropertyChecklistItem">
+        @foreach (var item in checklistItems)
+        {
+            <MudListItem>
+                <MudTextField @bind-Value="item.ActualState" Label="@($"{item.Name} (State)")" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="item.Comment" Label="Comment" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="item.MediaUrl" Label="Media URL" Variant="Variant.Outlined" />
+            </MudListItem>
+        }
+    </MudList>
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitChecklist">Submit</MudButton>
+
+    @if (!string.IsNullOrEmpty(submissionMessage))
+    {
+        <MudText Color="Color.Error">@submissionMessage</MudText>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public Guid leaseId { get; set; }
+    private List<PropertyChecklistItem> checklistItems = new();
+    private string submissionMessage = string.Empty;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        checklistItems = new List<PropertyChecklistItem>
+        {
+            new PropertyChecklistItem { Name = "Painting", ExpectedState = "Good" },
+            new PropertyChecklistItem { Name = "Roofing", ExpectedState = "Good" },
+            new PropertyChecklistItem { Name = "Furniture", ExpectedState = "Good" }
+        };
+    }
+
+    private async Task SubmitChecklist()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync($"api/checklist/submit?leaseId={leaseId}", checklistItems);
+            if (response.IsSuccessStatusCode)
+            {
+                Nav.NavigateTo("/dashboard");
+            }
+            else
+            {
+                submissionMessage = $"Failed to submit: {response.ReasonPhrase}";
+            }
+        }
+        catch (Exception ex)
+        {
+            submissionMessage = $"Failed: {ex.Message}";
+        }
+    }
+}

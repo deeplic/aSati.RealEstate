@@ -1,0 +1,50 @@
+﻿@page "/property/unit/{UnitId:guid}/lease"
+@inject HttpClient Http
+@inject NavigationManager Nav
+@using MudBlazor
+@using aSati.Shared.Models
+
+<PageTitle>Assign Lease</PageTitle>
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h6">Assign Lease</MudText>
+
+    <MudTextField @bind-Value="tenantEmail" Label="Tenant Email" Required="true" />
+    <MudDatePicker @bind-Date="startDate" Label="Start Date" Required="true" />
+    <MudDatePicker @bind-Date="endDate" Label="End Date (Optional)" />
+
+    <MudButton OnClick="Assign" Color="Color.Primary" Variant="Variant.Filled">Assign</MudButton>
+
+    <MudText Color="Color.Error">@error</MudText>
+</MudPaper>
+
+@code {
+    [Parameter] public Guid UnitId { get; set; }
+
+    private string tenantEmail = "";
+    private DateTime? startDate = DateTime.UtcNow;
+    private DateTime? endDate;
+    private string error = "";
+
+    private async Task Assign()
+    {
+        error = "";
+        var response = await Http.PostAsJsonAsync("api/lease/assign", new
+        {
+            PropertyUnitId = UnitId,
+            TenantEmail = tenantEmail,
+            StartDate = startDate,
+            EndDate = endDate
+        });
+
+        if (response.IsSuccessStatusCode)
+        {
+            Nav.NavigateTo("/dashboard");
+        }
+        else
+        {
+            var message = await response.Content.ReadAsStringAsync();
+            error = $"Failed to assign lease: {message}";
+        }
+    }
+}
