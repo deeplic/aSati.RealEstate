@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;
+using Serilog;
 
 namespace aSati
 {
@@ -14,8 +15,13 @@ namespace aSati
     {
         public static async Task Main(string[] args)
         {
+            Log.Logger = new LoggerConfiguration()
+            .WriteTo.Console()
+            .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+            .Enrich.FromLogContext()
+            .CreateLogger();
             var builder = WebApplication.CreateBuilder(args);
-
+            builder.Host.UseSerilog();
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveWebAssemblyComponents()
@@ -24,6 +30,7 @@ namespace aSati
             builder.Services.AddCascadingAuthenticationState();
             builder.Services.AddScoped<IdentityUserAccessor>();
             builder.Services.AddScoped<IdentityRedirectManager>();
+            builder.Services.AddAutoMapper(typeof(Program));
 
             // Remove this block, because AddIdentity() already configures authentication
             //builder.Services.AddAuthentication(options =>

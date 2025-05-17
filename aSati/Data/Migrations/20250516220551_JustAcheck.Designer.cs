@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using aSati.Data;
 
@@ -11,9 +12,11 @@ using aSati.Data;
 namespace aSati.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250516220551_JustAcheck")]
+    partial class JustAcheck
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -235,6 +238,9 @@ namespace aSati.Migrations
                     b.Property<Guid>("PropertyUnitId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("PropertyUnitId1")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
@@ -250,6 +256,8 @@ namespace aSati.Migrations
                     b.HasIndex("ApplicationUserId");
 
                     b.HasIndex("PropertyUnitId");
+
+                    b.HasIndex("PropertyUnitId1");
 
                     b.HasIndex("TenantId");
 
@@ -307,9 +315,14 @@ namespace aSati.Migrations
                     b.Property<Guid>("PropertyId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("PropertyId1")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PropertyId");
+
+                    b.HasIndex("PropertyId1");
 
                     b.ToTable("PropertyUnits");
                 });
@@ -371,11 +384,15 @@ namespace aSati.Migrations
                         .WithMany("Leases")
                         .HasForeignKey("ApplicationUserId");
 
-                    b.HasOne("aSati.Shared.Models.PropertyUnit", "PropertyUnit")
+                    b.HasOne("aSati.Shared.Models.PropertyUnit", null)
                         .WithMany("Leases")
                         .HasForeignKey("PropertyUnitId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("aSati.Shared.Models.PropertyUnit", "PropertyUnit")
+                        .WithMany()
+                        .HasForeignKey("PropertyUnitId1");
 
                     b.HasOne("aSati.Data.ApplicationUser", null)
                         .WithMany()
@@ -436,11 +453,15 @@ namespace aSati.Migrations
 
             modelBuilder.Entity("aSati.Shared.Models.PropertyUnit", b =>
                 {
-                    b.HasOne("aSati.Shared.Models.MainProperty", "Property")
+                    b.HasOne("aSati.Shared.Models.MainProperty", null)
                         .WithMany("Units")
                         .HasForeignKey("PropertyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("aSati.Shared.Models.MainProperty", "Property")
+                        .WithMany()
+                        .HasForeignKey("PropertyId1");
 
                     b.Navigation("Property");
                 });

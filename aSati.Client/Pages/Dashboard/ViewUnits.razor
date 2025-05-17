@@ -28,15 +28,15 @@
 @code {
     [Parameter] public Guid PropertyId { get; set; }
 
-    private List<PropertyUnit> units = new();
+    private List<UnitDto> units = new();
     private string propertyName = "Loading...";
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            units = await Http.GetFromJsonAsync<List<PropertyUnit>>($"api/property/{PropertyId}/units");
-            var property = await Http.GetFromJsonAsync<MainProperty>($"api/property/{PropertyId}");
+            units = await Http.GetFromJsonAsync<List<UnitDto>>($"api/property/{PropertyId}/units");
+            var property = await Http.GetFromJsonAsync<MainPropertyDto>($"api/property/{PropertyId}");
             propertyName = property?.Name ?? "Unknown";
         }
         catch

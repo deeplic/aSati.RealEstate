@@ -73,7 +73,7 @@
 </MudPaper>
 
 @code {
-    private List<MainProperty> Properties = new();
+    private List<MainPropertyDto> Properties = new();
     private int TotalProperties => Properties.Count;
     private int TotalUnits => Properties.Sum(p => p.Units?.Count ?? 0);
     private int ActiveLeases => Properties
@@ -91,7 +91,7 @@
     {
         try
         {
-            Properties = await Http.GetFromJsonAsync<List<MainProperty>>("api/property/mine") ?? new();
+            Properties = await Http.GetFromJsonAsync<List<MainPropertyDto>>("api/property/mine") ?? new();
         }
         catch (Exception ex)
         {

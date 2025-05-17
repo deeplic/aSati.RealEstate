@@ -17,17 +17,17 @@ namespace aSati.Data
         {
             base.OnModelCreating(builder);
 
-            // 🔗 MainProperty to PropertyUnit
-            builder.Entity<MainProperty>()
-                .HasMany(p => p.Units)
-                .WithOne()
+            // ✅ MainProperty → PropertyUnit
+            builder.Entity<PropertyUnit>()
+                .HasOne(u => u.Property)
+                .WithMany(p => p.Units)
                 .HasForeignKey(u => u.PropertyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // 🔗 PropertyUnit to Lease
-            builder.Entity<PropertyUnit>()
-                .HasMany(u => u.Leases)
-                .WithOne()
+            // ✅ PropertyUnit → Lease
+            builder.Entity<Lease>()
+                .HasOne(l => l.PropertyUnit)
+                .WithMany(u => u.Leases)
                 .HasForeignKey(l => l.PropertyUnitId)
                 .OnDelete(DeleteBehavior.Cascade);
 

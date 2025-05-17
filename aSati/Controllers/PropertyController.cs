@@ -1,5 +1,6 @@
 ﻿using aSati.Data;
 using aSati.Shared.Models;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -14,12 +15,15 @@ namespace aSati.Controllers
     public class PropertyController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-
+        private readonly ILogger<PropertyController> _logger;
         private readonly UserManager<ApplicationUser> _userManager;
-        public PropertyController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        private readonly IMapper _mapper;
+        public PropertyController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IMapper mapper, ILogger<PropertyController> logger)
         {
             _context = context;
             _userManager = userManager;
+            _mapper = mapper;
+            _logger = logger;
         }
 
         [HttpGet("mine")]
@@ -32,10 +36,11 @@ namespace aSati.Controllers
             var properties = await _context.Properties
                 .Where(p => p.OwnerId == userId)
                 .Include(p => p.Units)
-                    .ThenInclude(u => u.Leases)
+                .ThenInclude(u => u.Leases)
                 .ToListAsync();
 
-            return Ok(properties);
+            var result = _mapper.Map<List<MainPropertyDto>>(properties);
+            return Ok(result);
         }
         [HttpPost]
         public async Task<IActionResult> CreateProperty(MainProperty model)
@@ -62,7 +67,7 @@ namespace aSati.Controllers
             return Ok(properties);
         }
         [HttpGet("{propertyId}/units")]
-        public async Task<ActionResult<List<PropertyUnit>>> GetUnits(Guid propertyId)
+        public async Task<ActionResult<List<UnitDto>>> GetUnits(Guid propertyId)
         {
             var property = await _context.Properties
                 .Include(p => p.Units)
@@ -70,15 +75,36 @@ namespace aSati.Controllers
 
             if (property == null)
                 return NotFound();
-
-            return Ok(property.Units);
+            var result = _mapper.Map<List<UnitDto>>(property.Units);
+            return Ok(result);
         }
         [HttpGet("{id}")]
-        public async Task<ActionResult<MainProperty>> GetProperty(Guid id)
+        public async Task<ActionResult<MainPropertyDto>> GetProperty(Guid id)
         {
             var property = await _context.Properties.FindAsync(id);
+
             if (property == null) return NotFound();
-            return property;
+            var dto =new MainPropertyDto
+            {
+                Id = property.Id,
+                Name = property.Name,
+                Address = property.Address,
+                Units = property.Units.Select(u => new UnitDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Leases = u.Leases.Select(l => new LeaseDto
+                    {
+                        Id = l.Id,
+                        StartDate = l.StartDate,
+                        EndDate = l.EndDate
+                    }).ToList()
+                }).ToList(),
+                City = property.City,
+                Country = property.Country
+            };
+
+            return dto;
         }
         [HttpPost("/api/unit")]
         public async Task<IActionResult> AddUnit([FromBody] PropertyUnit unit)
