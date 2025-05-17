@@ -1,0 +1,85 @@
+﻿@page "/dashboard/admin"
+@using Microsoft.AspNetCore.Authorization
+@using aSati.Shared.DTOs
+@attribute [Authorize(Roles = "SystemAdmin")]
+@inject HttpClient Http
+
+<PageTitle>System Admin Dashboard</PageTitle>
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h4" GutterBottom="true">System Admin Dashboard</MudText>
+
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1">Total Users</MudText>
+                    <MudText Typo="Typo.h5">@Stats?.TotalUsers</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1">Property Owners</MudText>
+                    <MudText Typo="Typo.h5">@Stats?.PropertyOwners</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1">Staff Members</MudText>
+                    <MudText Typo="Typo.h5">@Stats?.StaffMembers</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1">Tenants</MudText>
+                    <MudText Typo="Typo.h5">@Stats?.Tenants</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1">Properties</MudText>
+                    <MudText Typo="Typo.h5">@Stats?.TotalProperties</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1">Units</MudText>
+                    <MudText Typo="Typo.h5">@Stats?.TotalUnits</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1">Active Leases</MudText>
+                    <MudText Typo="Typo.h5">@Stats?.ActiveLeases</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@code {
+    private SystemAdminDashboardDto? Stats;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Stats = await Http.GetFromJsonAsync<SystemAdminDashboardDto>("api/system/dashboard");
+    }
+}

@@ -16,6 +16,7 @@ namespace aSati.Shared.Models
         public DateTime? EndDate { get; set; }
         public LeaseStatus Status { get; set; } = LeaseStatus.Active;
         public List<PropertyChecklistItem> ChecklistItems { get; set; } = new();
+        public string? OwnerComment { get; set; }
     }
     public enum LeaseStatus
     {

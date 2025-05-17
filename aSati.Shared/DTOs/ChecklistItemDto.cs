@@ -13,6 +13,7 @@ public enum ChecklistStatus
     NotStarted,
     InProgress,
     Completed,
-    NeedsReview
+    NeedsReview,
+    Approve
 }
 

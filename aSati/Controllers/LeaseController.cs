@@ -63,7 +63,6 @@ public class LeaseController : ControllerBase
         return Ok(leases);
     }
     [HttpGet("owner/reviews")]
-    [HttpGet("owner/reviews")]
     [Authorize(Roles = "PropertyOwner,Staff,Superuser")]
     public async Task<IActionResult> GetLeasesForReview()
     {
@@ -87,6 +86,43 @@ public class LeaseController : ControllerBase
             .ToListAsync();
 
         return Ok(leases);
+    }
+    [HttpGet("{id:guid}/review")]
+    public async Task<ActionResult<LeaseReviewDto>> GetLeaseReview(Guid id)
+    {
+        var lease = await _context.Leases
+            .Include(l => l.PropertyUnit)
+                .ThenInclude(pu => pu.Property)
+            .Include(l => l.ChecklistItems)
+            .FirstOrDefaultAsync(l => l.Id == id);
+
+        if (lease is null) return NotFound();
+
+        var tenantEmail = await _context.Users
+            .Where(u => u.Id == lease.TenantId)
+            .Select(u => u.Email)
+            .FirstOrDefaultAsync() ?? "Unknown";
+
+        var dto = new DetailLeaseReviewDto
+        {
+            LeaseId = lease.Id,
+            TenantEmail = tenantEmail,
+            PropertyName = lease.PropertyUnit?.Property?.Name ?? "N/A",
+            UnitLabel = lease.PropertyUnit?.Name ?? "N/A",
+            StartDate = lease.StartDate,
+            EndDate = lease.EndDate,
+            Status = lease.Status,
+            ChecklistItems = lease.ChecklistItems.Select(ci => new ChecklistItemReviewDto
+            {
+                Id = ci.Id,
+                Title = ci.Name,
+                Comment = ci.Comment,
+                MediaUrl = ci.MediaUrl,
+                Status = ci.Status
+            }).ToList()
+        };
+
+        return Ok(dto);
     }
 }
 

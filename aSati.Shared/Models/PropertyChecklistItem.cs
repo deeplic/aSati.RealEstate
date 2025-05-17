@@ -14,5 +14,6 @@ namespace aSati.Shared.Models
         public string? ActualState { get; set; }
         public string? Comment { get; set; }
         public string? MediaUrl { get; set; }
+        public ChecklistStatus Status { get; set; }
     }
 }

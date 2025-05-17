@@ -1,0 +1,23 @@
+﻿@page "/dashboard"
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthProvider
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.IsInRole("Superuser"))
+            Navigation.NavigateTo("/dashboard/superuser");
+        else if (user.IsInRole("SystemAdmin"))
+            Navigation.NavigateTo("/dashboard/admin");
+        else if (user.IsInRole("PropertyOwner"))
+            Navigation.NavigateTo("/dashboard/owner");
+        else if (user.IsInRole("Staff"))
+            Navigation.NavigateTo("/dashboard/staff");
+        else if (user.IsInRole("Tenant"))
+            Navigation.NavigateTo("/dashboard/tenant");
+        else
+            Navigation.NavigateTo("/unauthorized");
+    }
+}

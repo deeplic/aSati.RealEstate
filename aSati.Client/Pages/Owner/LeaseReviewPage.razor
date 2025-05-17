@@ -1,0 +1,64 @@
+﻿@page "/owner/lease/{id:guid}"
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Lease Review</PageTitle>
+
+<MudPaper Class="p-6 mt-4">
+    @if (lease == null)
+    {
+        <MudProgressCircular Indeterminate />
+    }
+    else
+    {
+        <MudText Typo="Typo.h5">Lease Review: @lease.PropertyName - @lease.UnitLabel</MudText>
+        <MudText Typo="Typo.subtitle2">Tenant: @lease.TenantEmail</MudText>
+        <MudText Typo="Typo.body2">Start: @lease.StartDate.ToShortDateString() | End: @(lease.EndDate?.ToShortDateString() ?? "Ongoing")</MudText>
+
+        <MudDivider Class="my-2" />
+
+        <MudList T="DetailLeaseReviewDto">
+            @foreach (var item in lease.ChecklistItems)
+            {
+                <MudListItem>
+                    <MudListItemText>
+                        <MudText Typo="Typo.subtitle1">@item.Title</MudText>
+                        <MudText Typo="Typo.body2">@item.Comment</MudText>
+                        <MudChip Color="Color.Info">@item.Status</MudChip>
+                        @if (!string.IsNullOrEmpty(item.MediaUrl))
+                        {
+                            <MudImage Src="@item.MediaUrl" Alt="Checklist Media" Width="150" Class="mt-2" />
+                        }
+                    </MudListItemText>
+                    <MudListItemIcon>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="() => ApproveItem(item.Id)">Approve</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => RequestChanges(item.Id)">Request Changes</MudButton>
+                    </MudListItemIcon>
+                </MudListItem>
+            }
+        </MudList>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public Guid id { get; set; }
+
+    private DetailLeaseReviewDto? lease;
+
+    protected override async Task OnInitializedAsync()
+    {
+        lease = await Http.GetFromJsonAsync<DetailLeaseReviewDto>($"api/lease/{id}/review");
+    }
+
+    private async Task ApproveItem(Guid itemId)
+    {
+        await Http.PostAsync($"api/lease/review/item/{itemId}/approve", null);
+        await OnInitializedAsync(); // reload
+    }
+
+    private async Task RequestChanges(Guid itemId)
+    {
+        await Http.PostAsync($"api/lease/review/item/{itemId}/request-changes", null);
+        await OnInitializedAsync(); // reload
+    }
+}

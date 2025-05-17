@@ -12,6 +12,7 @@ namespace aSati.Data
         public DbSet<MainProperty> Properties { get; set; }
         public DbSet<PropertyUnit> PropertyUnits { get; set; }
         public DbSet<Lease> Leases { get; set; }
+        public DbSet<PropertyChecklistItem> PropertyChecklistItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
