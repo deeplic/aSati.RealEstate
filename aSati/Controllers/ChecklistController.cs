@@ -1,5 +1,6 @@
 ﻿using aSati.Data;
 using aSati.Shared.Models;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,14 +10,15 @@ namespace aSati.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Tenant")] // Only tenants can submit
+//[Authorize(Roles = "Tenant")] // Only tenants can submit
 public class ChecklistController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
-
-    public ChecklistController(ApplicationDbContext context)
+    private readonly IMapper _mapper;
+    public ChecklistController(ApplicationDbContext context, IMapper mapper)
     {
         _context = context;
+        _mapper = mapper;
     }
 
     [HttpPost("submit")]
@@ -33,5 +35,20 @@ public class ChecklistController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok();
+    }
+    [HttpGet("{leaseId}/checklist")]
+   // [Authorize(Roles = "Tenant")]
+    public async Task<IActionResult> GetChecklistForLease(Guid leaseId)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var lease = await _context.Leases
+            .Include(l => l.ChecklistItems)
+            .FirstOrDefaultAsync(l => l.Id == leaseId && l.TenantId == userId);
+
+        if (lease == null)
+            return NotFound("Lease not found or access denied.");
+
+        var checklist = _mapper.Map<List<ChecklistItemDto>>(lease.ChecklistItems);
+        return Ok(checklist);
     }
 }

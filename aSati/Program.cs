@@ -22,88 +22,113 @@ namespace aSati
             .CreateLogger();
             var builder = WebApplication.CreateBuilder(args);
             builder.Host.UseSerilog();
-            // Add services to the container.
-            builder.Services.AddRazorComponents()
-                .AddInteractiveWebAssemblyComponents()
-                .AddAuthenticationStateSerialization();
-
-            builder.Services.AddCascadingAuthenticationState();
-            builder.Services.AddScoped<IdentityUserAccessor>();
-            builder.Services.AddScoped<IdentityRedirectManager>();
-            builder.Services.AddAutoMapper(typeof(Program));
-
-            // Remove this block, because AddIdentity() already configures authentication
-            //builder.Services.AddAuthentication(options =>
-            //{
-            //    options.DefaultScheme = IdentityConstants.ApplicationScheme;
-            //    options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-            //})
-            //.AddIdentityCookies();
-            builder.Services.AddAuthorization();
-
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(connectionString));
-            builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
-            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            try 
             {
-                options.SignIn.RequireConfirmedAccount = true;
-                options.User.RequireUniqueEmail = true;
-            })
-            .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddDefaultTokenProviders();
-            builder.Services.AddCors(options =>
-            {
-                options.AddDefaultPolicy(policy =>
+                Log.Information("Starting application...");
+                // Add services to the container.
+                builder.Configuration
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json")
+                .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+                .AddEnvironmentVariables();
+                builder.Services.AddRazorComponents()
+                    .AddInteractiveWebAssemblyComponents()
+                    .AddAuthenticationStateSerialization();
+
+                builder.Services.AddCascadingAuthenticationState();
+                builder.Services.AddScoped<IdentityUserAccessor>();
+                builder.Services.AddScoped<IdentityRedirectManager>();
+                builder.Services.AddAutoMapper(typeof(Program));
+
+                // Remove this block, because AddIdentity() already configures authentication
+                //builder.Services.AddAuthentication(options =>
+                //{
+                //    options.DefaultScheme = IdentityConstants.ApplicationScheme;
+                //    options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+                //})
+                //.AddIdentityCookies();
+                builder.Services.AddAuthorization();
+
+                var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+                builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                    options.UseSqlServer(connectionString));
+                builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+                builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
                 {
-                    policy.AllowAnyOrigin()
-                          .AllowAnyHeader()
-                          .AllowAnyMethod();
+                    options.SignIn.RequireConfirmedAccount = true;
+                    options.User.RequireUniqueEmail = true;
+                })
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+                builder.Services.AddAuthentication()
+                .AddGoogle(options =>
+                {
+                    options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+                    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
                 });
-            });
-            builder.Services.AddMudServices();
-            builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
-            builder.Services.AddControllers();
-            builder.Services.AddHttpClient(); // This registers HttpClient for injection
 
-            var app = builder.Build();
+                builder.Services.AddCors(options =>
+                {
+                    options.AddDefaultPolicy(policy =>
+                    {
+                        policy.AllowAnyOrigin()
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    });
+                });
+                builder.Services.AddMudServices();
+                builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+                builder.Services.AddControllers();
+                builder.Services.AddHttpClient(); // This registers HttpClient for injection
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseWebAssemblyDebugging();
-                app.UseMigrationsEndPoint();
+                var app = builder.Build();
+
+                // Configure the HTTP request pipeline.
+                if (app.Environment.IsDevelopment())
+                {
+                    app.UseWebAssemblyDebugging();
+                    app.UseMigrationsEndPoint();
+                }
+                else
+                {
+                    app.UseExceptionHandler("/Error");
+                    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                    app.UseHsts();
+                }
+                app.UseRouting();
+                app.UseCors();
+                app.UseAuthentication();
+                app.UseAuthorization();
+
+                app.UseHttpsRedirection();
+
+                app.UseAntiforgery();
+
+                app.MapStaticAssets();
+                app.MapRazorComponents<App>()
+                    .AddInteractiveWebAssemblyRenderMode()
+                    .AddAdditionalAssemblies(typeof(Client._Imports).Assembly);
+
+                // Add additional endpoints required by the Identity /Account Razor components.
+                app.MapControllers();
+                app.MapAdditionalIdentityEndpoints();
+                using (var scope = app.Services.CreateScope())
+                {
+                    var services = scope.ServiceProvider;
+                    await SeedData.InitializeAsync(services);
+                }
+                app.Run();
             }
-            else
+            catch (Exception ex)
             {
-                app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
+                Log.Fatal(ex, "Application start-up failed");
             }
-            app.UseRouting();
-            app.UseCors();
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.UseHttpsRedirection();
-
-            app.UseAntiforgery();
-
-            app.MapStaticAssets();
-            app.MapRazorComponents<App>()
-                .AddInteractiveWebAssemblyRenderMode()
-                .AddAdditionalAssemblies(typeof(Client._Imports).Assembly);
-
-            // Add additional endpoints required by the Identity /Account Razor components.
-            app.MapControllers();
-            app.MapAdditionalIdentityEndpoints();
-            using (var scope = app.Services.CreateScope())
+            finally
             {
-                var services = scope.ServiceProvider;
-                await SeedData.InitializeAsync(services);
+                Log.CloseAndFlush();
             }
-            app.Run();
         }
+
     }
 }

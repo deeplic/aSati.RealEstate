@@ -1,0 +1,68 @@
+﻿@page "/owner/leases"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@using MudBlazor
+
+<PageTitle>Lease Reviews</PageTitle>
+
+<h3>Lease Review Dashboard</h3>
+
+@if (leases == null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (!leases.Any())
+{
+    <MudAlert Severity="Severity.Info">No leases found for review.</MudAlert>
+}
+else
+{
+    <MudTable Items="@leases" Hover="true">
+        <HeaderContent>
+            <MudTh>Unit</MudTh>
+            <MudTh>Tenant</MudTh>
+            <MudTh>Dates</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.UnitName</MudTd>
+            <MudTd>@context.TenantName</MudTd>
+            <MudTd>@context.StartDate.ToShortDateString() - @context.EndDate.ToShortDateString()</MudTd>
+            <MudTd>
+                @if (context.ChecklistCompleted)
+                {
+                    <MudChip T="string" Color="Color.Success">Checklist Complete</MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Color="Color.Warning">Pending</MudChip>
+                }
+            </MudTd>
+            <MudTd>
+                <MudButton Variant="Variant.Text" OnClick="@(() => ReviewLease(context.LeaseId))">Review</MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<LeaseReviewDto>? leases;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            leases = await Http.GetFromJsonAsync<List<LeaseReviewDto>>("api/lease/owner/reviews");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error loading leases: " + ex.Message, Severity.Error);
+        }
+    }
+
+    private void ReviewLease(Guid leaseId)
+    {
+        NavigationManager.NavigateTo($"/owner/lease/{leaseId}");
+    }
+}

@@ -9,5 +9,6 @@ public class PropertyProfile : Profile
         CreateMap<MainProperty, MainPropertyDto>();
         CreateMap<PropertyUnit, UnitDto>();
         CreateMap<Lease, LeaseDto>();
+        CreateMap<PropertyChecklistItem, ChecklistItemDto>().ReverseMap();
     }
 }

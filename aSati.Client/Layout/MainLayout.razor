@@ -72,9 +72,7 @@ else
                 </AuthorizeView>
                 <AuthorizeView Roles="PropertyOwner,Staff,Superuser">
                     <Authorized>
-                        <NavLink class="nav-link" href="/owner/leases">
-                            <span class="bi bi-list-task"></span> Lease Reviews
-                        </NavLink>
+                        <MudNavLink Href="/owner/leases" Icon="@Icons.Material.Filled.List">Lease Reviews</MudNavLink>
                     </Authorized>
                 </AuthorizeView>
             </MudNavMenu>

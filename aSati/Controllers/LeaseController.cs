@@ -62,6 +62,32 @@ public class LeaseController : ControllerBase
 
         return Ok(leases);
     }
+    [HttpGet("owner/reviews")]
+    [HttpGet("owner/reviews")]
+    [Authorize(Roles = "PropertyOwner,Staff,Superuser")]
+    public async Task<IActionResult> GetLeasesForReview()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        var leases = await _context.Leases
+            .Include(l => l.PropertyUnit)
+                .ThenInclude(pu => pu.Property)
+            .Include(l => l.ChecklistItems)
+            .Where(l => l.PropertyUnit.Property.OwnerId == userId)
+            .Select(l => new LeaseReviewDto
+            {
+                LeaseId = l.Id,
+                UnitName = l.PropertyUnit.Name,
+                TenantName = _context.Users.Where(u => u.Id == l.TenantId).Select(u => u.UserName).FirstOrDefault() ?? "Unknown",
+                StartDate = l.StartDate,
+                EndDate = l.EndDate ?? DateTime.MinValue,
+                ChecklistCompleted = l.ChecklistItems.All(i => i.ActualState != null),
+                OwnerComment = null // ← Add if you support owner comments
+            })
+            .ToListAsync();
+
+        return Ok(leases);
+    }
 }
 
 public class AssignLeaseDto
